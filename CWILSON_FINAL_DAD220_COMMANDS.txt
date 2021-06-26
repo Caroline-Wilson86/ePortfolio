@@ -1,0 +1,137 @@
+/*Use predetermined database. CEW*/
+USE messaging;
+
+
+/*Insert myself as an entry into person CEW*/
+INSERT INTO person (first_name, last_name)
+VALUES
+("Caroline", "Wilson");
+
+SELECT * FROM person;
+
+/*Add a new category within person and demonstrate how to update or delete CEW*/
+ALTER TABLE person
+ADD wireless_carrier VARCHAR(25) default NULL;
+
+SELECT * FROM person;
+
+UPDATE person
+SET wireless_carrier = "Sprint"
+WHERE first_name = "Caroline";
+
+SELECT * FROM person;
+
+DELETE FROM person
+WHERE first_name = "Diana"
+AND last_name = "Taurasi";
+
+SELECT * FROM person;
+
+/*Update table to include favorites depending if ID is 1 or out of range CEW*/
+
+ALTER TABLE contact_list
+ADD favorite VARCHAR(10) default NULL;
+
+SELECT * FROM contact_list;
+
+UPDATE contact_list
+SET favorite = "Y"
+WHERE contact_id = 1;
+
+SELECT * FROM contact_list;
+
+UPDATE contact_list
+SET favorite = "N"
+WHERE contact_id <> 1;
+
+SELECT * FROM contact_list;
+
+INSERT INTO contact_list (person_id, contact_id, favorite)
+VALUES
+(13, 1, "Y"),
+(10, 4, "N"),
+(9, 1, "Y"),
+(6, 3, "N");
+
+SELECT * FROM contact_list;
+
+/*create table and use foriegn references to populate CEW*/
+
+CREATE TABLE image(
+image_id INT(8) UNSIGNED NOT NULL auto_increment,
+image_name VARCHAR(50) NOT NULL,
+image_location VARCHAR(250) NOT NULL,
+PRIMARY KEY (image_id)
+) AUTO_INCREMENT = 1;
+
+CREATE TABLE message_image (
+message_id INT(8) NOT NULL,
+image_id INT(8) UNSIGNED NOT NULL,
+PRIMARY KEY (message_id, image_id),
+FOREIGN KEY (message_id) REFERENCES messaging.message (message_id),
+FOREIGN KEY (image_id) REFERENCES messaging.image (image_id)
+);
+
+INSERT INTO image (image_name, image_location)
+VALUES
+("Girl on a Boat", "Cape Cod, MA"),
+("Champagne Pour", "Niagra Falls"),
+("Larger than Life", "Redwood Forest"),
+("Right on Time", "Yellowstone National Park"),
+("Stone Fathers", "Mount Rushmore");
+
+INSET INTO message_image (message_id, image_id)
+VALUES
+(3, 3),
+(3, 2),
+(3, 5),
+(7, 4),
+(8, 1);
+
+SELECT * FROM message_image;
+
+/*Find and delineate messages stored within database based on parameters CEW*/
+
+SELECT
+sender.first_name AS "Sender's First Name",
+sender.last_name AS "Sender's Last Name",
+rec.first_name AS "Receiver's First Name",
+rec.last_name AS "Receiver's Last Name",
+message.message_id AS "Message ID",
+message.message AS "Message",
+message.send_datetime AS "Message Timestamp"
+FROM
+message
+JOIN
+person sender
+ON
+sender.person_id = message.sender_id
+JOIN
+person rec
+ON rec.person_id = message.receiver_id
+WHERE
+sender.first_name = "Michael";
+
+SELECT
+COUNT(message.sender_id) AS "Messages Sent", contact_list.person_id AS "Person ID", person.first_name AS "First Name", person.last_name AS "Last Name"
+FROM
+message
+JOIN
+contact_list
+ON message.sender_id = contact_list.person_id
+JOIN
+person
+ON person.person_id = message.sender_id
+WHERE
+contact_list.person_id >= 1
+GROUP BY contact_list.person_id;
+
+SELECT
+message.message_id AS "Message ID", message.message AS "Message", message.send_datetime AS "Message Timestamp", image.image_name AS "First Image Name", image.image_location AS "First Image Location"
+FROM message_image
+INNER JOIN message
+ON message_image.message_id = message.message_id
+INNER JOIN image
+ON message_image.image_id = image.image_id
+GROUP BY message.message_id;
+
